@@ -31,7 +31,7 @@ void lookup_routes(Router *router) {
     char buffer[BUFFER_SIZE] = {0};
     read(router->new_socket, buffer, BUFFER_SIZE - 1);
     char method[16], path[256], protocol[16];
-    sscanf(buffer, "%s %s %s", method, path, protocol);
+    sscanf(buffer, "%15s %255s %15s", method, path, protocol);
 
     for (int i = 0; i < router->route_count; i++) {
         if (strcmp(router->routes[i].method, method) == 0 && strcmp(router->routes[i].path, path) == 0) {
@@ -42,6 +42,9 @@ void lookup_routes(Router *router) {
 
     char *response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Not Found!</h1></body></html>";
     write(router->new_socket, response, strlen(response));
+
+    // close the socket to prevent leaks
+    close(router->new_socket);
 }
 
 void run_http_router(Router *router, int port) {
@@ -79,7 +82,9 @@ void free_http_router(Router *router) {
 void add_route(Router *router, const char *method, const char *path, http_handler handler) {
     if (router->route_count < MAX_ROUTES) {
         Route route;
-        strcpy(route.method, method);
+        // <temporary workaround> prevent buffer overflows, kinda ugly but does the job
+        strncpy(route.method, method, sizeof(route.method)-1);
+        route.method[sizeof(route.method)-1] = '\0'; // null termination
         strcpy(route.path, path);
         route.handler = handler;
         router->routes[router->route_count++] = route;
