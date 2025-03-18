@@ -22,15 +22,13 @@ void handle_client(int client_socket) {
     close(client_socket);
 }
 
-void add_route(Router *router, const char method, const char path, http_handler handler) {
+void add_route(Router *router, const char *method, const char *path, http_handler handler) {
     if (router->route_count < MAX_ROUTES) {
         Route route;
-        strcpy
-        route.method = method;
-        // strcpy(route.method, method);
-        // strcpy(route.path, path);
-        // route.handler = handler;
-        // router->routes[router->route_count++] = route;
+        strcpy(route.method, method);
+        strcpy(route.path, path);
+        route.handler = handler;
+        router->routes[router->route_count++] = route;
     }
 }
 
