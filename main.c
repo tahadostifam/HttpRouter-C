@@ -1,6 +1,9 @@
 #include "http_router.h"
 
 int main() {
-    new_http_router(8080);
+    Router* router = new_http_router();
+
+
     
-}
+    run_http_router(router, 8080);
+}   
