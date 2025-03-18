@@ -18,7 +18,6 @@ typedef struct Route
 
 typedef struct Router
 {
-    int opt;
     int server_fd;
     int new_socket;
     struct sockaddr_in address;
@@ -29,6 +28,7 @@ typedef struct Router
 Router* new_http_router();
 void run_http_router(Router *router, int port);
 void free_http_router(Router *router);
+void write_string(int socket, const char *str);
 void add_route(Router *router, const char *method, const char *path, http_handler handler);
 
 #endif //HTTP_ROUTER_H
