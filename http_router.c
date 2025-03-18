@@ -9,7 +9,7 @@
 
 void handle_client(int client_socket) {
     char buffer[BUFFER_SIZE] = {0};
-    size_t _ = read(client_socket, buffer, BUFFER_SIZE - 1);
+    read(client_socket, buffer, BUFFER_SIZE - 1);
 
     char method[16], path[256], protocol[16];
     sscanf(buffer, "%s %s %s", method, path, protocol);
@@ -17,7 +17,7 @@ void handle_client(int client_socket) {
     printf("Request: %s %s %s\n", method, path, protocol);
 
     char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Hello from my C server!</h1></body></html>";
-    _ = write(client_socket, response, strlen(response));
+    write(client_socket, response, strlen(response));
 
     close(client_socket);
 }
@@ -74,4 +74,9 @@ void run_http_router(Router *router, int port) {
 
         handle_client(router->new_socket);
     }
+}
+
+void free_http_router(Router *router) {
+    close(router->server_fd);
+    free(router);
 }
