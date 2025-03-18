@@ -40,7 +40,7 @@ void lookup_routes(Router *router) {
         }
     }
 
-    char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Not Found!</h1></body></html>";
+    char *response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Not Found!</h1></body></html>";
     write(router->new_socket, response, strlen(response));
 }
 
