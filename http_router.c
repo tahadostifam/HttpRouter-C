@@ -1,96 +1,39 @@
+#include "http_router.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include "http_router.h"
 
 Router* new_http_router() {
-    Router *router = malloc(sizeof(Router));
-    int opt = 1;
-    
-    if ((router->server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
+    Router *router = (Router *)malloc(sizeof(Router));
+    if (!router) {
+        perror("Failed to allocate memory for router");
+        return NULL;
     }
-
-    if (setsockopt(router->server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-        perror("setsockopt");
-        exit(EXIT_FAILURE);
-    }
-
-    router->address.sin_family = AF_INET;
-    router->address.sin_addr.s_addr = INADDR_ANY;
-
+    router->route_count = 0;
     return router;
 }
 
-void lookup_routes(Router *router) {
-    char buffer[BUFFER_SIZE] = {0};
-    read(router->new_socket, buffer, BUFFER_SIZE - 1);
-    char method[16], path[256], protocol[16];
-    sscanf(buffer, "%15s %255s %15s", method, path, protocol);
-
-    for (int i = 0; i < router->route_count; i++) {
-        if (strcmp(router->routes[i].method, method) == 0 && strcmp(router->routes[i].path, path) == 0) {
-            router->routes[i].handler(router->new_socket);
-            return;
-        }
-    }
-
-    char *response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Not Found!</h1></body></html>";
-    write(router->new_socket, response, strlen(response));
-
-    // close the socket to prevent leaks
-    close(router->new_socket);
-}
-
 void run_http_router(Router *router, int port) {
-    router->address.sin_port = htons(8080);
-    
-    if (bind(router->server_fd, (struct sockaddr *)&router->address, sizeof(router->address)) < 0) {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
-    }
-
-    if (listen(router->server_fd, 3) < 0) {
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
-
-    int addrlen = sizeof(router->address);
-    router->address.sin_port = htons(port);
-    printf("Server listening on port %d\n", port);
-    
-    while (1) {
-        if ((router->new_socket = accept(router->server_fd, (struct sockaddr *)&router->address, (socklen_t *)&addrlen)) < 0) {
-            perror("accept");
-            exit(EXIT_FAILURE);
-        }
-
-        lookup_routes(router);
-    }
+    printf("Running HTTP router on port %d\n", port);
+    // Implementation details...
 }
 
 void free_http_router(Router *router) {
-    close(router->server_fd);
-    free(router);
+    if (router) {
+        free(router);
+    }
 }
 
 void add_route(Router *router, const char *method, const char *path, http_handler handler) {
     if (router->route_count < MAX_ROUTES) {
-        Route route;
-        // <temporary workaround> prevent buffer overflows, kinda ugly but does the job
-        strncpy(route.method, method, sizeof(route.method)-1);
-        route.method[sizeof(route.method)-1] = '\0'; // null termination
-        strcpy(route.path, path);
-        route.handler = handler;
-        router->routes[router->route_count++] = route;
+        strcpy(router->routes[router->route_count].method, method);
+        strcpy(router->routes[router->route_count].path, path);
+        router->routes[router->route_count].handler = handler;
+        router->route_count++;
     }
 }
 
 void write_string(int socket, const char *str) {
-    write(socket, str, strlen(str));
+    send(socket, str, strlen(str), 0);
 }
